@@ -7,9 +7,18 @@ collections and their indexes.
 
 from prettytable import PrettyTable
 import psutil
-from pymongo import Connection
+from socket import getfqdn
 from pymongo import ReadPreference
 from optparse import OptionParser
+from distutils.version import StrictVersion
+import pymongo
+
+HAS_PYMONGO3 = bool(StrictVersion(pymongo.version) >= StrictVersion('3.0'))
+
+if HAS_PYMONGO3:
+    from pymongo import MongoClient
+else:
+    from pymongo import Connection as MongoClient
 
 def compute_signature(index):
     signature = index["ns"]
@@ -70,18 +79,34 @@ def get_cli_options():
                       default="",
                       metavar="PASSWORD",
                       help="Admin password if authentication is enabled")
+    parser.add_option("--ssl-cert",
+                      dest="ssl_certfile",
+                      default=None,
+                      metavar="CERTIFICATE",
+                      help="SSL Certificate to use is SSL is enabled")
+    parser.add_option("--ssl-ca-certs",
+                      dest="ssl_ca_certs",
+                      default=None,
+                      metavar="CA",
+                      help="SSL Certificate of CA for certificate validation if SSL is enabled")
 
     (options, args) = parser.parse_args()
 
     return options
 
-def get_connection(host, port, username, password):
+def get_connection(host, port, username, password, ssl_certfile=None, ssl_ca_certs=None):
     userPass = ""
     if username and password:
         userPass = username + ":" + password + "@"
 
     mongoURI = "mongodb://" + userPass + host + ":" + str(port)
-    return Connection(host=mongoURI, read_preference=ReadPreference.SECONDARY)
+
+    conn_kwargs = dict(host=mongoURI, read_preference=ReadPreference.SECONDARY)
+
+    if HAS_PYMONGO3:
+        conn_kwargs.update(dict(ssl_certfile=ssl_certfile, ssl_ca_certs=ssl_ca_certs))
+
+    return MongoClient(**conn_kwargs)
 
 def main(options):
     summary_stats = {
@@ -91,7 +116,8 @@ def main(options):
     }
     all_stats = []
 
-    connection = get_connection(options.host, options.port, options.user, options.password)
+    connection = get_connection(options.host, options.port, options.user, options.password,
+                                options.ssl_certfile, options.ssl_ca_certs)
 
     all_db_stats = {}
 
@@ -164,7 +190,7 @@ def main(options):
     print "Total Index Size:", convert_bytes(summary_stats["indexSize"])
 
     # this is only meaningful if we're running the script on localhost
-    if options.host == "localhost":
+    if options.host == "localhost" or options.host == getfqdn():
         ram_headroom = psutil.phymem_usage()[0] - summary_stats["indexSize"]
         print "RAM Headroom:", convert_bytes(ram_headroom)
         print "RAM Used: %s (%s%%)" % (convert_bytes(psutil.phymem_usage()[1]), psutil.phymem_usage()[3])
