@@ -108,7 +108,10 @@ def convert_bytes(bytes):
         size = '%.2fb' % bytes
     return size
 
-def main(options):
+def main(options=None):
+    if options is None:
+        options = get_cli_options()
+
     summary_stats = {
         "count" : 0,
         "size" : 0,

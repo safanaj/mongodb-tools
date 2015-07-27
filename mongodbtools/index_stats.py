@@ -108,7 +108,10 @@ def get_connection(host, port, username, password, ssl_certfile=None, ssl_ca_cer
 
     return MongoClient(**conn_kwargs)
 
-def main(options):
+def main(options=None):
+    if options is None:
+        options = get_cli_options()
+
     summary_stats = {
         "count" : 0,
         "size" : 0,
