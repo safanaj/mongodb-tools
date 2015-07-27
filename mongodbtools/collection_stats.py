@@ -7,6 +7,7 @@ collections and their indexes.
 
 from prettytable import PrettyTable
 import psutil
+from socket import getfqdn
 from pymongo import ReadPreference
 from optparse import OptionParser
 from distutils.version import StrictVersion
@@ -171,17 +172,17 @@ def main(options):
 
     print
     print(x.get_string(sortby="% Size"))
-    print("Total Documents:", summary_stats["count"])
-    print("Total Data Size:", convert_bytes(summary_stats["size"]))
-    print("Total Index Size:", convert_bytes(summary_stats["indexSize"]))
-    print("Total Storage Size:", convert_bytes(summary_stats["storageSize"]))
+    print("Total Documents: %s" % summary_stats["count"])
+    print("Total Data Size: %s" % convert_bytes(summary_stats["size"]))
+    print("Total Index Size: %s" % convert_bytes(summary_stats["indexSize"]))
+    print("Total Storage Size: %s" % convert_bytes(summary_stats["storageSize"]))
 
     # this is only meaningful if we're running the script on localhost
-    if options.host == "localhost":
+    if options.host == "localhost" or options.host == getfqdn():
         ram_headroom = psutil.phymem_usage()[0] - summary_stats["indexSize"]
-        print("RAM Headroom:", convert_bytes(ram_headroom))
+        print("RAM Headroom: %s" % convert_bytes(ram_headroom))
         print("RAM Used: %s (%s%%)" % (convert_bytes(psutil.phymem_usage()[1]), psutil.phymem_usage()[3]))
-        print("Available RAM Headroom:", convert_bytes((100 - psutil.phymem_usage()[3]) / 100 * ram_headroom))
+        print("Available RAM Headroom: %s" % convert_bytes((100 - psutil.phymem_usage()[3]) / 100 * ram_headroom))
 
 if __name__ == "__main__":
     options = get_cli_options()
