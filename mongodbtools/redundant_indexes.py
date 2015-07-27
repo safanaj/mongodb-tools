@@ -16,7 +16,7 @@ HAS_PYMONGO3 = bool(StrictVersion(pymongo.version) >= StrictVersion('3.0'))
 if HAS_PYMONGO3:
     from pymongo import MongoClient
 else:
-    from pymongo import Connection as MongoClient
+    from pymongo import Connection as MongoClient  # pylint: disable=E0611
 
 def get_cli_options():
     parser = OptionParser(usage="usage: python %prog [options]",
@@ -90,7 +90,7 @@ def main(options):
         return signature
 
     def report_redundant_indexes(current_db):
-        print "Checking DB: %s" % current_db.name
+        print("Checking DB: %s" % current_db.name)
         indexes = current_db.system.indexes.find()
         index_map = {}
         for index in indexes:
@@ -102,11 +102,11 @@ def main(options):
                 if signature == other_sig:
                     continue
                 if other_sig.startswith(signature):
-                    print "Index %s[%s] may be redundant with %s[%s]" % (
+                    print ("Index %s[%s] may be redundant with %s[%s]" % (
                         index_map[signature]["ns"],
                         index_map[signature]["name"],
                         index_map[other_sig]["ns"],
-                        index_map[other_sig]["name"])
+                        index_map[other_sig]["name"]))
 
     databases= []
     if options.database:

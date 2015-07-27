@@ -18,7 +18,7 @@ HAS_PYMONGO3 = bool(StrictVersion(pymongo.version) >= StrictVersion('3.0'))
 if HAS_PYMONGO3:
     from pymongo import MongoClient
 else:
-    from pymongo import Connection as MongoClient
+    from pymongo import Connection as MongoClient  # pylint: disable=E0611
 
 def compute_signature(index):
     signature = index["ns"]
@@ -27,7 +27,7 @@ def compute_signature(index):
     return signature
 
 def get_collection_stats(database, collection):
-    print "Checking DB: %s" % collection.full_name
+    print("Checking DB: %s" % collection.full_name)
     return database.command("collstats", collection.name)
 
 # From http://www.5dollarwhitebox.org/drupal/node/84
@@ -167,11 +167,11 @@ def main(options):
                 x.add_row(row)
 
 
-    print "Index Overview"
-    print x.get_string(sortby="Collection")
+    print("Index Overview")
+    print(x.get_string(sortby="Collection"))
 
     print
-    print "Top 5 Largest Indexes"
+    print("Top 5 Largest Indexes")
     x = PrettyTable(["Collection", "Index","% Size", "Index Size"])
     x.align["Collection"] = "l"
     x.align["Index"] = "l"
@@ -182,19 +182,19 @@ def main(options):
     top_five_indexes = sorted(index_size_mapping.keys(), reverse=True)[0:5]
     for size in top_five_indexes:
         x.add_row(index_size_mapping.get(size))
-    print x
+    print(x)
     print
 
-    print "Total Documents:", summary_stats["count"]
-    print "Total Data Size:", convert_bytes(summary_stats["size"])
-    print "Total Index Size:", convert_bytes(summary_stats["indexSize"])
+    print("Total Documents:", summary_stats["count"])
+    print("Total Data Size:", convert_bytes(summary_stats["size"]))
+    print("Total Index Size:", convert_bytes(summary_stats["indexSize"]))
 
     # this is only meaningful if we're running the script on localhost
     if options.host == "localhost" or options.host == getfqdn():
         ram_headroom = psutil.phymem_usage()[0] - summary_stats["indexSize"]
-        print "RAM Headroom:", convert_bytes(ram_headroom)
-        print "RAM Used: %s (%s%%)" % (convert_bytes(psutil.phymem_usage()[1]), psutil.phymem_usage()[3])
-        print "Available RAM Headroom:", convert_bytes((100 - psutil.phymem_usage()[3]) / 100 * ram_headroom)
+        print("RAM Headroom:", convert_bytes(ram_headroom))
+        print("RAM Used: %s (%s%%)" % (convert_bytes(psutil.phymem_usage()[1]), psutil.phymem_usage()[3]))
+        print("Available RAM Headroom:", convert_bytes((100 - psutil.phymem_usage()[3]) / 100 * ram_headroom))
 
 if __name__ == "__main__":
     options = get_cli_options()
